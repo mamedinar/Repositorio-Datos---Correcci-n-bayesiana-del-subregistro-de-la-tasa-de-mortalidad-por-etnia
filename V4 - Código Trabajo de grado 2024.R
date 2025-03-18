@@ -1,5 +1,5 @@
 rm(list=ls())   
-setwd("/Users/mmedinar/Documents")
+setwd("~/Documents")
 
 set.seed(6447100)
 
@@ -61,6 +61,13 @@ BRstd_COL = Proj %*% BRstd_COL # Calculo del Lambda * para hombres y mujeres Col
 
 age = 1:21
 B   = bs(age, knots=c(1,3,5,8,12,18), degree=1) #c(00 A 04 Years,10 A 14 Years,20 A 24 Years,35 A 39 Years,55 A 59 Years,85 A 89 Years)
+
+# NOTA: SE PRUEBA EL MODELO CON DIFERENTES BASES DE SPLINES, SELECCIONAMOS LA MEJOR QUE ES bs(age, knots=c(1,3,5,8,12,18), degree=1)
+#B   = bs(age, knots=c(1,4,7,9,11,17), degree=1)
+#B   = bs(age, knots=c(1,3,5,8,12,18), degree=2)
+#B   = bs(age, knots=c(1,3,5,8,12,18), degree=3)
+#B   = bs(age, knots=c(1,2,3,4,5,6), degree=1)
+
 nalpha = ncol(B)
 dim(B)
 
@@ -156,11 +163,23 @@ model {
   }
   
   ## Previas
-  to_vector(alpha)       ~ normal(0,4);
-  to_vector(alpha_diff)  ~ normal(0, 1/sqrt(2));
+  // to_vector(alpha)       ~ normal(0,1);
+  // to_vector(alpha_diff)  ~ normal(0,1);
+  // to_vector(alpha)       ~ normal(0,9);
+  // to_vector(alpha_diff)  ~ normal(0, 1/sqrt(3));
+  // to_vector(alpha)       ~ normal(0,2);
+  // to_vector(alpha_diff)  ~ normal(0, 1/sqrt(4));
+  
+  to_vector(alpha)       ~ normal(0,4); // NOTA: SE VALIDAN OTRAS PREVIAS ESTA PRODUCE EL MODELO CON MEJOR DIC
+  to_vector(alpha_diff)  ~ normal(0, 1/sqrt(2)); // NOTA: SE VALIDAN OTRAS PREVIAS ESTA PRODUCE EL MODELO CON MEJOR DIC
 
-  K1      ~ exponential(0.05) ;   // Exponencial truncada para la precisión de K1
-  Kall    ~ exponential(0.05) ;   // Exponencial truncada para la precisión de Kall
+  // K1      ~ exponential(0.02) ;   
+  // Kall    ~ exponential(0.02) ;   
+  // K1      ~ exponential(1) ;   
+  // Kall    ~ exponential(1) ;
+  
+  K1      ~ exponential(0.05) ;   // Exponencial truncada para la precisión de K1 -- NOTA: SE VALIDAN OTRAS PREVIAS ESTA PRODUCE EL MODELO CON MEJOR DIC
+  Kall    ~ exponential(0.05) ;   // Exponencial truncada para la precisión de Kall -- NOTA: SE VALIDAN OTRAS PREVIAS ESTA PRODUCE EL MODELO CON MEJOR DIC
   
   pi[,1] ~ beta(     (5+K1)*pihat1, (5+K1)*(1-pihat1) );
   
@@ -214,8 +233,15 @@ model {
   }
   
   ## PREVIAS
-  to_vector(alpha)       ~ normal(0,4);
-  to_vector(alpha_diff)  ~ normal(0, 1/sqrt(2));
+  // to_vector(alpha)       ~ normal(0,1);
+  // to_vector(alpha_diff)  ~ normal(0,1);
+  // to_vector(alpha)       ~ normal(0,9);
+  // to_vector(alpha_diff)  ~ normal(0, 1/sqrt(3));
+  // to_vector(alpha)       ~ normal(0,2);
+  // to_vector(alpha_diff)  ~ normal(0, 1/sqrt(4));
+  
+  to_vector(alpha)       ~ normal(0,4); // NOTA: SE VALIDAN OTRAS PREVIAS ESTA PRODUCE EL MODELO CON MEJOR DIC
+  to_vector(alpha_diff)  ~ normal(0, 1/sqrt(2)); // NOTA: SE VALIDAN OTRAS PREVIAS ESTA PRODUCE EL MODELO CON MEJOR DIC
 
 } //modelO
 "
@@ -302,7 +328,7 @@ for (casenum in 1:nrow(case)) {
   prior.a.pi3bar = ab[,1]
   prior.b.pi3bar = ab[,2]
   
-  ## Eestimaciones ponderadas de puntos para la cobertura a edades 0 
+  ## Estimaciones ponderadas de puntos para la cobertura a edades 0 
   ## y en todas las edades, del modelo busca activa ó auditoria
   ## ASEGURARSE DE QUE ESTÉN EN EL MISMO ORDEN QUE LAS FILAS de D y N
   
@@ -407,8 +433,9 @@ for (casenum in 1:nrow(case)) {
 #-------------------------------------------------------------------------------------#
 # RESULTADOS HOMBRES
 #-------------------------------------------------------------------------------------#
-load("/Users/mmedinar/Documents/Personal/Trabajo de Grado - Demografia/Datos/Corrida 2 - Modelo/Stan-04Oct24-0012-within-Male.RData") # HOMBRES
-
+load("Personal/Trabajo de Grado - Demografia/Datos/Corrida 2 - Modelo/Stan-04Oct24-0012-within-Male.RData") # HOMBRES
+# NOTA: SE VALIDAN OTRAS PREVIAS Y MATRICES DE B-SPLINES COMO ESTAN COMENTADAS EN EL CODIGO STAN, SE SELECCIONA LA
+#       COMBINACIÓN QUE PRODUCE EL MODELO CON MEJOR DIC
 fit_H<-fit
 print(fit)
 print(ML)
@@ -668,6 +695,8 @@ ggplot(datos_Raizales_H, aes(x = Edad, y = Cantidad, color = Tipo_Defuncion)) +
 # RESULTADOS MUJERES
 #-------------------------------------------------------------------------------------#
 load("/Users/mmedinar/Documents/Personal/Trabajo de Grado - Demografia/Datos/Corrida 2 - Modelo/Stan-04Oct24-0012-within-Female.RData") # MUJERES
+# NOTA: SE VALIDAN OTRAS PREVIAS Y MATRICES DE B-SPLINES COMO ESTAN COMENTADAS EN EL CODIGO STAN, SE SELECCIONA LA
+#       COMBINACIÓN QUE PRODUCE EL MODELO CON MEJOR DIC
 
 fit_M<-fit
 print(fit_M)
@@ -927,3 +956,52 @@ ggplot(datos_Raizales_M, aes(x = Edad, y = Cantidad, color = Tipo_Defuncion)) +
 
 #write.table(datos_Raizales_M, file = "Personal/Trabajo de Grado - Demografia/Datos/datos_Raizales_M.csv", sep = ";", dec = ",", row.names = FALSE)
 
+#-------------------------------------------------------------#
+
+datos_I_A<-filter(datos,IDPERTET==("Indigena") |IDPERTET==("Negro(a), Mulato(a), Afrodescendiente, Afrocolombiano(a)"))
+datos_I_A_H<-filter(datos_I_A,SEXO=="Hombre")
+# Calcular la tasa de mortalidad
+datos_I_A_H <- datos_I_A_H %>%
+  mutate(tasa_mortalidad = log(defunciones / pop_2018))
+# Crear el gráfico
+ggplot(datos_I_A_H, aes(x = Grupo_de_Edad, y = defunciones, color = IDPERTET, group = IDPERTET)) +
+  geom_line(size = 1) + 
+  geom_point(size = 2) +
+  labs(title = "Defunciones por Grupo de Edad para Indígenas y Afrodescendientes",
+       x = "Grupo de Edad", y = "Número de Defunciones",
+       color = "Grupo Étnico") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplot(datos_I_A_H, aes(x = Grupo_de_Edad, y = tasa_mortalidad, color = IDPERTET, group = IDPERTET)) +
+  geom_line(size = 1) + 
+  geom_point(size = 2) +
+  labs(title = "Log de la tasa de mortalidad por Grupo de Edad para Indígenas y Afrodescendientes (Hombres)",
+       x = "Grupo de Edad", y = "Log (Tasa de Mortalidad)",
+       color = "Grupo Étnico") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+
+datos_I_A_M<-filter(datos_I_A,SEXO=="Mujer")
+# Calcular la tasa de mortalidad
+datos_I_A_M <- datos_I_A_M %>%
+  mutate(tasa_mortalidad = log(defunciones / pop_2018))
+ggplot(datos_I_A_M, aes(x = Grupo_de_Edad, y = defunciones, color = IDPERTET, group = IDPERTET)) +
+  geom_line(size = 1) + 
+  geom_point(size = 2) +
+  labs(title = "Defunciones por Grupo de Edad para Indígenas y Afrodescendientes",
+       x = "Grupo de Edad", y = "Número de Defunciones",
+       color = "Grupo Étnico") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggplot(datos_I_A_M, aes(x = Grupo_de_Edad, y = tasa_mortalidad, color = IDPERTET, group = IDPERTET)) +
+  geom_line(size = 1) + 
+  geom_point(size = 2) +
+  labs(title = "Log de la tasa de mortalidad por Grupo de Edad para Indígenas y Afrodescendientes (Mujeres)",
+       x = "Grupo de Edad", y = "Log (Tasa de Mortalidad)",
+       color = "Grupo Étnico") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
